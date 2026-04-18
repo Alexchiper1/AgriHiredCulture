@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Candidate Skill</title>
+</head>
+<body>
+    <h1>Add Candidate Skill</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Skill</button>
+    </form>
+
+    <p><a href="/">Home</a></p>
+    <p><a href="/skills/">View Candidate Skills</a></p>
+</body>
+</html>
