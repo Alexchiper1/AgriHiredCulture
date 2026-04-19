@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobs</title>
+</head>
+<body>
+    <h1>Jobs</h1>
+
+    {% if jobs %}
+        <ul>
+            {% for job in jobs %}
+                <li>
+                    <strong>{{ job.title }}</strong> -
+                    {{ job.employer.company_name }} -
+                    {{ job.location }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No jobs found.</p>
+    {% endif %}
+
+    <p><a href="/jobs/add/">Add Job</a></p>
+    <p><a href="/">Home</a></p>
+</body>
+</html>
