@@ -76,10 +76,18 @@
         <a href="/jobs/add/">Add Job</a>
         <a href="/applications/">Applications</a>
         <a href="/applications/add/">Add Application</a>
+        <a href="/register/">Register</a>
+        <a href="/login/">Login</a>
+        <a href="/logout/">Logout</a>
     </nav>
 
     <main>
         <h2>Welcome</h2>
+        {% if user.is_authenticated %}
+            <p>You are logged in as <strong>{{ user.username }}</strong>.</p>
+        {% else %}
+            <p>You are not logged in.</p>
+        {% endif %}
         <p>
             AgriHiredCulture is a web-based recruitment platform designed for the agriculture sector.
             It helps employers find skilled agricultural candidates and allows candidates to showcase

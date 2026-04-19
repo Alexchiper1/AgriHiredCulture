@@ -1,10 +1,29 @@
 from django.shortcuts import render, redirect
-from .forms import CandidateSkillForm, JobForm, ApplicationForm
+from django.contrib.auth import login, logout
+from .forms import CandidateSkillForm, JobForm, ApplicationForm, RegisterForm
 from .models import CandidateSkill, Job, Application
 
 
 def home(request):
     return render(request, "core/home.html")
+
+
+def register(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("home")
+    else:
+        form = RegisterForm()
+
+    return render(request, "core/register.html", {"form": form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("home")
 
 
 def add_candidate_skill(request):
