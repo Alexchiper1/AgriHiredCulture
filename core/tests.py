@@ -46,6 +46,16 @@ class ViewAndRegistrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "AgriHiredCulture")
 
+    def test_logged_out_homepage_shows_only_auth_actions(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/register/"')
+        self.assertContains(response, 'href="/login/"')
+        self.assertNotContains(response, 'href="/jobs/" class="btn btn-light btn-sm"')
+        self.assertNotContains(response, 'href="/skills/" class="btn btn-light btn-sm"')
+        self.assertNotContains(response, 'href="/applications/" class="btn btn-light btn-sm"')
+        self.assertContains(response, "Login to Access", count=3)
+
     def test_register_page_loads(self):
         response = self.client.get("/register/")
         self.assertEqual(response.status_code, 200)
