@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Application</title>
+    <title>Apply for Job</title>
 </head>
 <body>
-    <h1>Add Application</h1>
+    <h1>Apply for Job</h1>
+
+    <p><strong>Job:</strong> {{ job.title }}</p>
+    <p><strong>Location:</strong> {{ job.location }}</p>
+    <p><strong>Description:</strong> {{ job.description }}</p>
 
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save Application</button>
+        <button type="submit">Submit Application</button>
     </form>
 
-    <p><a href="/applications/">View Applications</a></p>
+    <p><a href="/jobs/">Back to Jobs</a></p>
     <p><a href="/">Home</a></p>
 </body>
 </html>

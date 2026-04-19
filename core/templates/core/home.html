@@ -22,6 +22,23 @@
             <a class="btn btn-outline-light btn-sm" href="/login/">Login</a>
         </div>
     </div>
+    {% if user.is_authenticated %}
+        <p>You are logged in as <strong>{{ user.username }}</strong>.</p>
+        <p>Your role is <strong>{{ user.userprofile.role }}</strong>.</p>
+
+        {% if user.userprofile.role == "candidate" %}
+            <a href="/skills/">My Skills</a>
+            <a href="/jobs/">Browse Jobs</a>
+            <a href="/applications/">My Applications</a>
+        {% elif user.userprofile.role == "employer" %}
+            <a href="/jobs/">My Jobs</a>
+            <a href="/jobs/add/">Post Job</a>
+            <a href="/applications/">Applications Received</a>
+        {% elif user.userprofile.role == "recruiter" %}
+            <a href="/applications/">View All Applications</a>
+            <a href="/jobs/">View Jobs</a>
+        {% endif %}
+    {% endif %}
 </nav>
 
 <!-- HERO SECTION -->
