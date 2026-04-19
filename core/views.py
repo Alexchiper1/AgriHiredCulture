@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from .forms import CandidateSkillForm, JobForm, ApplicationForm, RegisterForm
-from .models import CandidateSkill, Job, Application
+from .models import CandidateSkill, Job, Application, UserProfile
 
 
 def home(request):
@@ -13,6 +13,8 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
+            role = form.cleaned_data["role"]
+            UserProfile.objects.create(user=user, role=role)
             login(request, user)
             return redirect("home")
     else:

@@ -88,6 +88,15 @@
         {% else %}
             <p>You are not logged in.</p>
         {% endif %}
+
+        {% if user.is_authenticated %}
+            <p>You are logged in as <strong>{{ user.username }}</strong>.</p>
+            {% if user.userprofile %}
+                <p>Your role is <strong>{{ user.userprofile.role }}</strong>.</p>
+            {% endif %}
+        {% else %}
+            <p>You are not logged in.</p>
+        {% endif %}
         <p>
             AgriHiredCulture is a web-based recruitment platform designed for the agriculture sector.
             It helps employers find skilled agricultural candidates and allows candidates to showcase
