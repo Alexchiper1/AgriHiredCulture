@@ -16,7 +16,7 @@
                     {{ job.employer.company_name }} -
                     {{ job.location }}
 
-                    {% if user.is_authenticated and user.userprofile.role == "candidate" %}
+                    {% if user.is_authenticated and user_role == "candidate" %}
                         <a href="/applications/add/{{ job.id }}/">Apply</a>
                     {% endif %}
                 </li>
@@ -26,7 +26,7 @@
         <p>No jobs found.</p>
     {% endif %}
 
-    {% if user.is_authenticated and user.userprofile.role == "employer" %}
+    {% if user.is_authenticated and user_role == "employer" %}
         <p><a href="/jobs/add/">Add Job</a></p>
     {% endif %}
 

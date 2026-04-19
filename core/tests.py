@@ -1,9 +1,16 @@
-from django.test import TestCase
-
-# Create your tests here.
-from django.test import TestCase, Client
+from django.core.management import call_command
 from django.contrib.auth.models import User
-from .models import UserProfile, CandidateProfile, Skill, CandidateSkill, EmployerProfile, Job, Application
+from django.test import Client, TestCase
+
+from .models import (
+    Application,
+    CandidateProfile,
+    CandidateSkill,
+    EmployerProfile,
+    Job,
+    Skill,
+    UserProfile,
+)
 
 
 class ModelTests(TestCase):
@@ -30,7 +37,7 @@ class ModelTests(TestCase):
         self.assertEqual(candidate_skill.skill.name, "Tractor Driving")
 
 
-class ViewTests(TestCase):
+class ViewAndRegistrationTests(TestCase):
     def setUp(self):
         self.client = Client()
 
@@ -46,6 +53,67 @@ class ViewTests(TestCase):
     def test_login_page_loads(self):
         response = self.client.get("/login/")
         self.assertEqual(response.status_code, 200)
+
+    def test_candidate_registration_creates_role_and_profile(self):
+        response = self.client.post(
+            "/register/",
+            {
+                "username": "newcandidate",
+                "email": "newcandidate@example.com",
+                "role": "candidate",
+                "password1": "Testpass123!",
+                "password2": "Testpass123!",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username="newcandidate")
+        self.assertEqual(user.userprofile.role, "candidate")
+        self.assertTrue(CandidateProfile.objects.filter(user=user).exists())
+
+    def test_employer_registration_creates_role_and_profile(self):
+        response = self.client.post(
+            "/register/",
+            {
+                "username": "newemployer",
+                "email": "newemployer@example.com",
+                "role": "employer",
+                "password1": "Testpass123!",
+                "password2": "Testpass123!",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username="newemployer")
+        self.assertEqual(user.userprofile.role, "employer")
+        self.assertTrue(EmployerProfile.objects.filter(user=user).exists())
+
+    def test_recruiter_registration_creates_role(self):
+        response = self.client.post(
+            "/register/",
+            {
+                "username": "newrecruiter",
+                "email": "newrecruiter@example.com",
+                "role": "recruiter",
+                "password1": "Testpass123!",
+                "password2": "Testpass123!",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username="newrecruiter")
+        self.assertEqual(user.userprofile.role, "recruiter")
+
+    def test_homepage_loads_for_superuser_without_userprofile(self):
+        admin_user = User.objects.create_superuser(
+            username="admin",
+            email="admin@admin.com",
+            password="password",
+        )
+        self.client.login(username="admin", password="password")
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, admin_user.username)
 
 
 class IntegrationTests(TestCase):
@@ -95,6 +163,20 @@ class IntegrationTests(TestCase):
         self.assertEqual(application.candidate.full_name, "Candidate Two")
 
 
+class SeedDataTests(TestCase):
+    def test_seed_data_command_populates_database(self):
+        call_command("seed_data", verbosity=0)
+        self.assertEqual(User.objects.count(), 5)
+        self.assertEqual(UserProfile.objects.count(), 4)
+        self.assertEqual(CandidateProfile.objects.count(), 2)
+        self.assertEqual(EmployerProfile.objects.count(), 1)
+        self.assertEqual(Skill.objects.count(), 4)
+        self.assertEqual(CandidateSkill.objects.count(), 4)
+        self.assertEqual(Job.objects.count(), 2)
+        self.assertEqual(Application.objects.count(), 2)
+        self.assertTrue(User.objects.get(username="user1").check_password("password"))
+
+
 class UseCaseTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -124,11 +206,88 @@ class UseCaseTests(TestCase):
             location="Cork"
         )
 
-    def test_full_candidate_to_application_flow(self):
-        candidate_skill = CandidateSkill.objects.create(candidate=self.candidate, skill=self.skill)
-        application = Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        self.recruiter_user = User.objects.create_user(username="recruiter1", password="password")
+        UserProfile.objects.create(user=self.recruiter_user, role="recruiter")
 
-        self.assertEqual(candidate_skill.skill.name, "Livestock Handling")
-        self.assertEqual(application.candidate.full_name, "User One")
-        self.assertEqual(application.job.title, "Livestock Assistant")
+    def test_candidate_can_add_skill_through_form(self):
+        self.client.login(username="user1", password="password")
+        response = self.client.post("/skills/add/", {"skill": self.skill.id}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(CandidateSkill.objects.filter(candidate=self.candidate, skill=self.skill).exists())
+
+    def test_employer_can_create_job_through_form(self):
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.post(
+            "/jobs/add/",
+            {
+                "title": "Crop Supervisor",
+                "description": "Oversee crop planning and field work",
+                "location": "Tipperary",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Job.objects.filter(title="Crop Supervisor", employer=self.employer).exists())
+
+    def test_candidate_can_apply_to_job_through_form(self):
+        self.client.login(username="user1", password="password")
+        response = self.client.post(f"/applications/add/{self.job.id}/", {}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        application = Application.objects.get(candidate=self.candidate, job=self.job)
         self.assertEqual(application.status, "Pending")
+
+    def test_duplicate_application_is_not_created(self):
+        Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        self.client.login(username="user1", password="password")
+        response = self.client.post(f"/applications/add/{self.job.id}/", {}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Application.objects.filter(candidate=self.candidate, job=self.job).count(), 1)
+
+    def test_candidate_cannot_add_job(self):
+        self.client.login(username="user1", password="password")
+        response = self.client.get("/jobs/add/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_employer_cannot_apply_for_job(self):
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.get(f"/applications/add/{self.job.id}/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_employer_sees_only_applications_for_their_jobs(self):
+        other_employer_user = User.objects.create_user(username="farmtwo", password="password")
+        UserProfile.objects.create(user=other_employer_user, role="employer")
+        other_employer = EmployerProfile.objects.create(
+            user=other_employer_user,
+            company_name="Other Farm",
+            location="Laois",
+        )
+        other_job = Job.objects.create(
+            employer=other_employer,
+            title="Other Job",
+            description="Different employer job",
+            location="Laois",
+        )
+        Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        Application.objects.create(candidate=self.candidate, job=other_job, status="Pending")
+
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.get("/applications/")
+        self.assertEqual(response.status_code, 200)
+        applications = list(response.context["applications"])
+        self.assertEqual(len(applications), 1)
+        self.assertEqual(applications[0].job, self.job)
+
+    def test_recruiter_can_view_all_applications(self):
+        second_job = Job.objects.create(
+            employer=self.employer,
+            title="Field Operator",
+            description="Support seasonal farm activity",
+            location="Cork",
+        )
+        Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        Application.objects.create(candidate=self.candidate, job=second_job, status="Pending")
+
+        self.client.login(username="recruiter1", password="password")
+        response = self.client.get("/applications/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["applications"].count(), 2)

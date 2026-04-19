@@ -14,20 +14,30 @@ from .models import (
 )
 
 
+def get_user_role(user):
+    if not user.is_authenticated:
+        return ""
+
+    try:
+        return user.userprofile.role
+    except UserProfile.DoesNotExist:
+        return ""
+
+
 def is_candidate(user):
-    return hasattr(user, "userprofile") and user.userprofile.role == "candidate"
+    return get_user_role(user) == "candidate"
 
 
 def is_employer(user):
-    return hasattr(user, "userprofile") and user.userprofile.role == "employer"
+    return get_user_role(user) == "employer"
 
 
 def is_recruiter(user):
-    return hasattr(user, "userprofile") and user.userprofile.role == "recruiter"
+    return get_user_role(user) == "recruiter"
 
 
 def home(request):
-    return render(request, "core/home.html")
+    return render(request, "core/home.html", {"user_role": get_user_role(request.user)})
 
 
 def register(request):
@@ -124,7 +134,7 @@ def job_list(request):
     else:
         jobs = Job.objects.select_related("employer").all()
 
-    return render(request, "core/job_list.html", {"jobs": jobs})
+    return render(request, "core/job_list.html", {"jobs": jobs, "user_role": get_user_role(request.user)})
 
 
 @login_required
