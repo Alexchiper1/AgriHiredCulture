@@ -15,7 +15,9 @@
             </div>
             <div>
                 <a href="/" class="btn btn-outline-success btn-sm">Home</a>
+                {% if user_role == "candidate" %}
                 <a href="/skills/add/" class="btn btn-success btn-sm ms-2">Add Skill</a>
+                {% endif %}
             </div>
         </div>
 

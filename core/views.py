@@ -107,7 +107,11 @@ def skill_list(request):
     else:
         skills = CandidateSkill.objects.select_related("candidate", "skill").all()
 
-    return render(request, "core/skill_list.html", {"skills": skills})
+    return render(
+        request,
+        "core/skill_list.html",
+        {"skills": skills, "user_role": get_user_role(request.user)},
+    )
 
 
 @login_required
