@@ -316,3 +316,38 @@ class UseCaseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/jobs/"')
         self.assertNotContains(response, 'href="/applications/add/"')
+
+    def test_employer_can_accept_application_for_their_job(self):
+        application = Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.post(
+            f"/applications/{application.id}/status/",
+            {"status": "Accepted"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        application.refresh_from_db()
+        self.assertEqual(application.status, "Accepted")
+
+    def test_recruiter_can_decline_application(self):
+        application = Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        self.client.login(username="recruiter1", password="password")
+        response = self.client.post(
+            f"/applications/{application.id}/status/",
+            {"status": "Declined"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        application.refresh_from_db()
+        self.assertEqual(application.status, "Declined")
+
+    def test_candidate_cannot_update_application_status(self):
+        application = Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+        self.client.login(username="user1", password="password")
+        response = self.client.post(
+            f"/applications/{application.id}/status/",
+            {"status": "Accepted"},
+        )
+        self.assertEqual(response.status_code, 403)
+        application.refresh_from_db()
+        self.assertEqual(application.status, "Pending")

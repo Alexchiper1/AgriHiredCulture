@@ -14,9 +14,16 @@
         <ul class="list-group mb-3">
             {% for application in applications %}
                 <li class="list-group-item">
-                    {{ application.candidate.full_name }} applied for
-                    {{ application.job.title }} -
-                    Status: {{ application.status }}
+                    <strong>{{ application.job.title }}</strong> -
+                    {{ application.candidate.full_name }} -
+                    <span>Status: {{ application.status }}</span>
+                    {% if user_role == "employer" or user_role == "recruiter" or user.is_superuser %}
+                        <form method="post" action="/applications/{{ application.id }}/status/" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <button type="submit" name="status" value="Accepted" class="btn btn-success btn-sm">Accept</button>
+                            <button type="submit" name="status" value="Declined" class="btn btn-danger btn-sm">Decline</button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

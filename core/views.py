@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
 from .forms import CandidateSkillForm, JobForm, ApplicationForm, RegisterForm
 from .models import (
@@ -167,6 +167,32 @@ def add_application(request, job_id):
         form = ApplicationForm()
 
     return render(request, "core/add_application.html", {"form": form, "job": job})
+
+
+@login_required
+def update_application_status(request, application_id):
+    if request.method != "POST":
+        return HttpResponseForbidden("Status updates must be submitted as a form.")
+
+    application = get_object_or_404(Application.objects.select_related("job", "job__employer"), id=application_id)
+    new_status = request.POST.get("status")
+
+    if new_status not in {"Accepted", "Declined"}:
+        return HttpResponseBadRequest("Invalid application status.")
+
+    can_manage = False
+    if is_employer(request.user):
+        employer = get_object_or_404(EmployerProfile, user=request.user)
+        can_manage = application.job.employer_id == employer.id
+    elif is_recruiter(request.user) or request.user.is_superuser:
+        can_manage = True
+
+    if not can_manage:
+        return HttpResponseForbidden("You cannot update this application.")
+
+    application.status = new_status
+    application.save()
+    return redirect("application_list")
 
 
 @login_required
