@@ -351,3 +351,11 @@ class UseCaseTests(TestCase):
         self.assertEqual(response.status_code, 403)
         application.refresh_from_db()
         self.assertEqual(application.status, "Pending")
+
+    def test_status_buttons_hidden_for_non_pending_application(self):
+        Application.objects.create(candidate=self.candidate, job=self.job, status="Accepted")
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.get("/applications/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'value="Accepted" class="btn btn-success btn-sm">Accept</button>')
+        self.assertNotContains(response, 'value="Declined" class="btn btn-danger btn-sm">Decline</button>')

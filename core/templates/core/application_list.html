@@ -17,7 +17,7 @@
                     <strong>{{ application.job.title }}</strong> -
                     {{ application.candidate.full_name }} -
                     <span>Status: {{ application.status }}</span>
-                    {% if user_role == "employer" or user_role == "recruiter" or user.is_superuser %}
+                    {% if application.status == "Pending" and user_role == "employer" or application.status == "Pending" and user_role == "recruiter" or application.status == "Pending" and user.is_superuser %}
                         <form method="post" action="/applications/{{ application.id }}/status/" class="d-inline ms-2">
                             {% csrf_token %}
                             <button type="submit" name="status" value="Accepted" class="btn btn-success btn-sm">Accept</button>
