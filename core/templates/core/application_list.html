@@ -24,7 +24,9 @@
         <p>No applications found.</p>
     {% endif %}
 
-    <p><a href="/applications/add/" class="btn btn-success btn-sm">Add Application</a></p>
+    {% if user_role == "candidate" %}
+    <p><a href="/jobs/" class="btn btn-success btn-sm">Browse Jobs</a></p>
+    {% endif %}
     <p><a href="/" class="btn btn-outline-secondary btn-sm">Home</a></p>
     </div>
 </body>

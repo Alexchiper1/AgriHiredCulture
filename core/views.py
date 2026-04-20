@@ -178,4 +178,8 @@ def application_list(request):
     else:
         applications = Application.objects.none()
 
-    return render(request, "core/application_list.html", {"applications": applications})
+    return render(
+        request,
+        "core/application_list.html",
+        {"applications": applications, "user_role": get_user_role(request.user)},
+    )

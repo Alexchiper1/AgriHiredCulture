@@ -309,3 +309,10 @@ class UseCaseTests(TestCase):
         response = self.client.get("/applications/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["applications"].count(), 2)
+
+    def test_candidate_applications_page_links_to_jobs(self):
+        self.client.login(username="user1", password="password")
+        response = self.client.get("/applications/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/jobs/"')
+        self.assertNotContains(response, 'href="/applications/add/"')
