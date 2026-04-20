@@ -85,10 +85,14 @@ def add_candidate_skill(request):
     if request.method == "POST":
         form = CandidateSkillForm(request.POST)
         if form.is_valid():
-            candidate_skill = form.save(commit=False)
-            candidate_skill.candidate = candidate
-            candidate_skill.save()
-            return redirect("skill_list")
+            skill = form.cleaned_data["skill"]
+            if CandidateSkill.objects.filter(candidate=candidate, skill=skill).exists():
+                form.add_error("skill", "You already added this skill.")
+            else:
+                candidate_skill = form.save(commit=False)
+                candidate_skill.candidate = candidate
+                candidate_skill.save()
+                return redirect("skill_list")
     else:
         form = CandidateSkillForm()
 

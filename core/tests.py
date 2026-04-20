@@ -225,6 +225,14 @@ class UseCaseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(CandidateSkill.objects.filter(candidate=self.candidate, skill=self.skill).exists())
 
+    def test_duplicate_skill_is_not_created(self):
+        CandidateSkill.objects.create(candidate=self.candidate, skill=self.skill)
+        self.client.login(username="user1", password="password")
+        response = self.client.post("/skills/add/", {"skill": self.skill.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You already added this skill.")
+        self.assertEqual(CandidateSkill.objects.filter(candidate=self.candidate, skill=self.skill).count(), 1)
+
     def test_employer_can_create_job_through_form(self):
         self.client.login(username="adminfarm", password="password")
         response = self.client.post(
