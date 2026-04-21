@@ -14,8 +14,15 @@
         <ul class="list-group mb-3">
             {% for application in applications %}
                 <li class="list-group-item">
-                    <strong>{{ application.job.title }}</strong> -
-                    {{ application.candidate.full_name }} -
+                    <strong>{{ application.job.title }}</strong><br>
+                    Candidate: {{ application.candidate.full_name }} ({{ application.candidate.user.username }})<br>
+                    Skills:
+                    {% for candidate_skill in application.candidate.candidateskill_set.all %}
+                        {{ candidate_skill.skill.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No skills listed
+                    {% endfor %}
+                    <br>
                     <span>Status: {{ application.status }}</span>
                     {% if application.status == "Pending" and user_role == "employer" or application.status == "Pending" and user_role == "recruiter" or application.status == "Pending" and user.is_superuser %}
                         <form method="post" action="/applications/{{ application.id }}/status/" class="d-inline ms-2">

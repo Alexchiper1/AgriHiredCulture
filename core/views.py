@@ -197,14 +197,21 @@ def update_application_status(request, application_id):
 
 @login_required
 def application_list(request):
+    base_queryset = Application.objects.select_related(
+        "candidate",
+        "candidate__user",
+        "job",
+        "job__employer",
+    ).prefetch_related("candidate__candidateskill_set__skill")
+
     if is_candidate(request.user):
         candidate = get_object_or_404(CandidateProfile, user=request.user)
-        applications = Application.objects.select_related("candidate", "job").filter(candidate=candidate)
+        applications = base_queryset.filter(candidate=candidate)
     elif is_employer(request.user):
         employer = get_object_or_404(EmployerProfile, user=request.user)
-        applications = Application.objects.select_related("candidate", "job", "job__employer").filter(job__employer=employer)
+        applications = base_queryset.filter(job__employer=employer)
     elif is_recruiter(request.user) or request.user.is_superuser:
-        applications = Application.objects.select_related("candidate", "job").all()
+        applications = base_queryset.all()
     else:
         applications = Application.objects.none()
 

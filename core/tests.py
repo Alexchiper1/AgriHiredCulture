@@ -295,6 +295,16 @@ class UseCaseTests(TestCase):
         self.assertEqual(len(applications), 1)
         self.assertEqual(applications[0].job, self.job)
 
+    def test_employer_sees_candidate_username_and_skills_on_applications(self):
+        CandidateSkill.objects.create(candidate=self.candidate, skill=self.skill)
+        Application.objects.create(candidate=self.candidate, job=self.job, status="Pending")
+
+        self.client.login(username="adminfarm", password="password")
+        response = self.client.get("/applications/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "user1")
+        self.assertContains(response, "Livestock Handling")
+
     def test_recruiter_can_view_all_applications(self):
         second_job = Job.objects.create(
             employer=self.employer,
